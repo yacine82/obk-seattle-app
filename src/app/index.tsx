@@ -1,4 +1,5 @@
 
+import * as Notifications from 'expo-notifications';
 import { useState } from 'react';
 import {
   Alert,
@@ -33,13 +34,59 @@ export default function HomeScreen() {
   const [notificationsEnabled, setNotificationsEnabled] =
     useState(false);
 
-  const handleNotifications = () => {
-    setNotificationsEnabled(!notificationsEnabled);
+  const handleNotifications = async () => {
+    try {
+      const currentPermissions =
+        await Notifications.getPermissionsAsync();
 
-    Alert.alert(
-      'Notification Preview',
-      'Real Jumu’ah notifications will be available after we connect the notification service.'
-    );
+      let status = currentPermissions.status;
+
+      if (status !== 'granted') {
+        const requestedPermissions =
+          await Notifications.requestPermissionsAsync();
+
+        status = requestedPermissions.status;
+      }
+
+      if (status === 'granted') {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'OBK Seattle 🕌',
+            body:
+              'Assalamu Alaikum! This is a test notification from the OBK Seattle app.',
+            sound: 'default',
+          },
+          trigger: {
+            type:
+              Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: 5,
+          },
+        });
+
+        setNotificationsEnabled(true);
+
+        Alert.alert(
+          'Test Notification Scheduled',
+          'A test notification should arrive in approximately 5 seconds.'
+        );
+      } else {
+        setNotificationsEnabled(false);
+
+        Alert.alert(
+          'Notifications Not Enabled',
+          'You can allow notifications later in your phone settings.'
+        );
+      }
+    } catch (error) {
+      console.error('Notification error:', error);
+
+      Alert.alert(
+        'Notification Setup Error',
+        error instanceof Error
+          ? error.message
+          : 'Unable to schedule the test notification.'
+      );
+    }
   };
 
   return (
@@ -52,8 +99,12 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <View>
-            <Text style={styles.welcome}>Assalamu Alaikum</Text>
-            <Text style={styles.mosqueName}>OBK Seattle</Text>
+            <Text style={styles.welcome}>
+              Assalamu Alaikum
+            </Text>
+            <Text style={styles.mosqueName}>
+              OBK Seattle
+            </Text>
             <Text style={styles.subtitle}>
               Your community. Your mosque.
             </Text>
@@ -65,23 +116,34 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.hero}>
-          <Text style={styles.heroEyebrow}>WELCOME TO</Text>
+          <Text style={styles.heroEyebrow}>
+            WELCOME TO
+          </Text>
+
           <Text style={styles.heroTitle}>
             Omar Bin Al-Khattab
           </Text>
+
           <Text style={styles.heroSubtitle}>
             Islamic Center · Seattle
           </Text>
+
           <View style={styles.heroDivider} />
+
           <Text style={styles.heroMessage}>
             A place for faith, connection, and community.
           </Text>
         </View>
 
         <View style={styles.sectionHeading}>
-          <Text style={styles.sectionTitle}>Jumu’ah Prayer</Text>
+          <Text style={styles.sectionTitle}>
+            Jumu’ah Prayer
+          </Text>
+
           <View style={styles.featuredBadge}>
-            <Text style={styles.featuredText}>FRIDAY</Text>
+            <Text style={styles.featuredText}>
+              FRIDAY
+            </Text>
           </View>
         </View>
 
@@ -105,13 +167,13 @@ export default function HomeScreen() {
           >
             <Text style={styles.reminderButtonText}>
               {notificationsEnabled
-                ? 'Reminder Preview Selected'
+                ? 'Test Reminder Scheduled'
                 : 'Preview Friday Reminder'}
             </Text>
           </Pressable>
 
           <Text style={styles.disclaimer}>
-            Preview only · Notifications are not active yet
+            Preview only · Jumu’ah reminders are not active yet
           </Text>
         </View>
 
@@ -119,7 +181,10 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>
             Daily Prayer Times
           </Text>
-          <Text style={styles.sampleLabel}>SAMPLE</Text>
+
+          <Text style={styles.sampleLabel}>
+            SAMPLE
+          </Text>
         </View>
 
         <View style={styles.prayerCard}>
@@ -136,6 +201,7 @@ export default function HomeScreen() {
               <Text style={styles.prayerName}>
                 {prayer.name}
               </Text>
+
               <Text style={styles.prayerTime}>
                 {prayer.time}
               </Text>
@@ -158,9 +224,11 @@ export default function HomeScreen() {
           <Text style={styles.announcementCategory}>
             COMING SOON
           </Text>
+
           <Text style={styles.announcementTitle}>
             Stay Connected With OBK
           </Text>
+
           <Text style={styles.announcementBody}>
             Mosque announcements, programs, events,
             and community updates will appear here.

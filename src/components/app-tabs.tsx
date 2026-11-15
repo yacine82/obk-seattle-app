@@ -27,7 +27,7 @@ export default function AppTabs() {
 
       <NativeTabs.Trigger name="learn">
         <NativeTabs.Trigger.Label>Learn</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="book.fill" md="menu-book" />
+        <NativeTabs.Trigger.Icon sf="book.fill" md="menu_book" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="donate">
