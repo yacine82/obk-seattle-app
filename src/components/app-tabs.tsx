@@ -20,14 +20,14 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="events">
-        <NativeTabs.Trigger.Label>Events</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="calendar" md="event" />
+      <NativeTabs.Trigger name="quran">
+        <NativeTabs.Trigger.Label>Quran</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="book.closed.fill" md="menu_book" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="learn">
         <NativeTabs.Trigger.Label>Learn</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="book.fill" md="menu_book" />
+        <NativeTabs.Trigger.Icon sf="graduationcap.fill" md="school" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="donate">
@@ -41,6 +41,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="explore" hidden />
+      <NativeTabs.Trigger name="events" hidden />
     </NativeTabs>
   );
 }

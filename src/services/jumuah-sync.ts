@@ -5,130 +5,111 @@ import {
     type JumuahSchedule,
 } from './jumuah-schedule';
 
-/**
- * Convert a 12-hour time into 24-hour HH:mm format.
- *
- * Examples:
- * 12:30 PM -> 12:30
- * 1:30 PM  -> 13:30
- * 12:00 AM -> 00:00
- */
-export function convertTo24Hour(
-  hourText: string,
-  minuteText: string,
-  periodText: string
-): string {
-  let hours = Number(hourText);
-  const minutes = Number(minuteText);
-  const period = periodText.toUpperCase();
+// Supabase project URL.
+// This is a public project URL, not a secret.
+const SUPABASE_URL =
+  'https://rweaoteuzlhsdjvudcmi.supabase.co';
 
-  if (
-    !Number.isInteger(hours) ||
-    !Number.isInteger(minutes) ||
-    hours < 1 ||
-    hours > 12 ||
-    minutes < 0 ||
-    minutes > 59 ||
-    !['AM', 'PM'].includes(period)
-  ) {
-    throw new Error('Invalid website time.');
-  }
+// We will set this to your Supabase publishable key
+// in the next step.
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_EImII71b33o5526vSi2nCQ_f1e0jwOB';
 
-  if (period === 'AM' && hours === 12) {
-    hours = 0;
-  } else if (period === 'PM' && hours !== 12) {
-    hours += 12;
-  }
-
-  return (
-    String(hours).padStart(2, '0') +
-    ':' +
-    String(minutes).padStart(2, '0')
-  );
-}
+type LiveJumuahSchedule = {
+  id: number;
+  khutbah_time: string;
+  timezone: string;
+  source_url: string;
+  last_checked_at: string;
+  updated_at: string;
+};
 
 /**
- * Extract the Khutbah time from website text.
+ * Convert the database time into HH:mm.
  *
- * Returns null if no recognizable time is found.
- * This does not approve the time.
+ * Example:
+ * 12:30:00 -> 12:30
  */
-export function extractKhutbahTime(
-  websiteText: string
-): string | null {
-  const headingIndex = websiteText.search(/Khutbah/i);
-
-  if (headingIndex === -1) {
-    return null;
-  }
-
-  // Look for a time near the Khutbah heading.
-  const nearbyText = websiteText.slice(
-    headingIndex,
-    headingIndex + 150
-  );
-
-  const match = nearbyText.match(
-    /(\d{1,2}):(\d{2})\s*(AM|PM)/i
+function normalizeTime(time: string): string {
+  const match = time.match(
+    /^([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/
   );
 
   if (!match) {
-    return null;
+    throw new Error(
+      'Invalid Khutbah time received from Supabase.'
+    );
   }
 
-  try {
-    return convertTo24Hour(
-      match[1],
-      match[2],
-      match[3]
-    );
-  } catch {
-    return null;
-  }
+  return `${match[1]}:${match[2]}`;
 }
 
 /**
- * Fetch the OBK Seattle homepage and create
- * a candidate pending admin verification.
+ * Fetch the current Jumu'ah schedule from Supabase.
  *
- * This does not approve or publish a schedule.
+ * The Edge Function updates this database record
+ * automatically through Supabase Cron.
  */
 export async function fetchJumuahCandidate():
   Promise<JumuahSchedule> {
-  const response = await fetch(
-    JUMUAH_CONFIG.sourceUrl
-  );
-
-  if (!response.ok) {
+  if (!SUPABASE_PUBLISHABLE_KEY) {
     throw new Error(
-      `Website request failed: ${response.status}`
+      'Supabase publishable key has not been configured.'
     );
   }
 
-  const html = await response.text();
+  const endpoint =
+    `${SUPABASE_URL}/rest/v1/jumuah_live_schedule` +
+    '?id=eq.1&select=*';
 
-  // Remove scripts, styles, and HTML tags.
-  const websiteText = html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;|&#160;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const response = await fetch(endpoint, {
+    method: 'GET',
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Accept: 'application/json',
+    },
+  });
 
-  const khutbahTime = extractKhutbahTime(
-    websiteText
-  );
+  
+    if (!response.ok) {
+    const errorDetails = await response.text();
 
-  if (!khutbahTime) {
     throw new Error(
-      'Could not find a Khutbah time on the website.'
+        `Supabase request failed: ${response.status} - ${errorDetails}`
+    );
+    }
+
+
+  const records =
+    (await response.json()) as LiveJumuahSchedule[];
+
+  if (!Array.isArray(records) || records.length === 0) {
+    throw new Error(
+      'No Jumuah schedule is available in Supabase.'
     );
   }
 
+  const schedule = records[0];
+
+  if (schedule.timezone !== JUMUAH_CONFIG.timezone) {
+    throw new Error(
+      'Unexpected timezone in Supabase schedule.'
+    );
+  }
+
+  if (schedule.source_url !== JUMUAH_CONFIG.sourceUrl) {
+    throw new Error(
+      'Unexpected schedule source in Supabase.'
+    );
+  }
+
+  const khutbahTime = normalizeTime(
+    schedule.khutbah_time
+  );
+
+  // Preserve the existing schedule format expected
+  // by the Home screen and reminder service.
   return createWebsiteCandidate(
     khutbahTime,
-    new Date().toISOString()
+    schedule.updated_at
   );
 }

@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "obk-seattle-app",
@@ -39,11 +38,23 @@
         {
           "defaultChannel": "prayer-reminders"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "470c89e8-6458-437f-83c8-af4177b1bef7"
+      }
+    },
+    "owner": "yasco82"
   }
 }
