@@ -38,11 +38,34 @@ export async function fetchOfficialOBKPrayerTimes():
 
   const result = await response.json();
 
-  if (
-    result.success !== true ||
-    !Array.isArray(result.prayers) ||
-    result.prayers.length !== 6
-  ) {
+  
+const expectedPrayers = [
+  'Fajr',
+  'Sunrise',
+  'Dhuhr',
+  'Asr',
+  'Maghrib',
+  'Isha',
+];
+
+const validTime = (value: unknown): boolean =>
+  typeof value === 'string' &&
+  /^(0?[1-9]|1[0-2]):[0-5]\d (AM|PM)$/.test(value);
+
+if (
+  result.success !== true ||
+  !Array.isArray(result.prayers) ||
+  result.prayers.length !== 6 ||
+  !result.prayers.every(
+    (prayer: OBKPrayerTime, index: number) =>
+      prayer?.name === expectedPrayers[index] &&
+      validTime(prayer.start) &&
+      (prayer.name === 'Sunrise'
+        ? prayer.iqamah === null
+        : validTime(prayer.iqamah))
+  )
+)
+{
     throw new Error('Invalid OBK prayer schedule');
   }
 
