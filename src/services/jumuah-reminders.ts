@@ -69,12 +69,25 @@ export async function scheduleJumuahReminder(
         ? { channelId: 'jumuah-reminders' }
         : {}),
     },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-      weekday: 6,
-      hour,
-      minute,
-    },
+    
+trigger:
+  Platform.OS === 'ios'
+    ? {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        weekday: 6,
+        hour,
+        minute,
+        second: 0,
+        timezone: 'America/Los_Angeles',
+        repeats: true,
+      }
+    : {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        weekday: 6,
+        hour,
+        minute,
+      },
+
   });
 
   return true;
