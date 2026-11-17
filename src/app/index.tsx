@@ -214,7 +214,22 @@ useEffect(() => {
         }
       } catch (error) {
         console.error('Failed to refresh official OBK prayer times:', error);
-        if (active) setOfficialError(true);
+        if (active) {
+  setOfficialError(true);
+  setOfficialSchedule((previous) => {
+    if (!previous) return null;
+
+    const today = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Los_Angeles',
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date());
+
+    return previous.date === today ? previous : null;
+  });
+}
       } finally {
         inProgress = false;
         if (active) setOfficialLoading(false);
@@ -270,7 +285,7 @@ useEffect(() => {
 
         Alert.alert(
           'Friday Reminder Disabled',
-          'Your weekly Jumu’ah reminder has been canceled.'
+          "Your weekly Jumu'ah reminder has been canceled."
         );
 
         return;
@@ -398,7 +413,7 @@ useEffect(() => {
       if (!details.scheduled) {
         Alert.alert(
           'Reminder Status',
-          'No weekly Jumu’ah reminder is currently scheduled.'
+          "No weekly Jumu'ah reminder is currently scheduled."
         );
         return;
       }
@@ -436,7 +451,7 @@ useEffect(() => {
       if (status === 'granted') {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: 'OBK Seattle 🕌',
+            title: 'OBK Seattle ðŸ•Œ',
             body:
               'Assalamu Alaikum! This is a test notification from the OBK Seattle app.',
             sound: 'default',
@@ -512,7 +527,7 @@ useEffect(() => {
           </Text>
 
           <Text style={styles.heroSubtitle}>
-            Islamic Center · Seattle
+            Islamic Center  -  Seattle
           </Text>
 
           <View style={styles.heroDivider} />
@@ -524,7 +539,7 @@ useEffect(() => {
 
         <View style={styles.sectionHeading}>
           <Text style={styles.sectionTitle}>
-            Jumu’ah Prayer
+            Jumu'ah Prayer
           </Text>
 
           <View style={styles.featuredBadge}>
@@ -561,7 +576,7 @@ useEffect(() => {
               </Text>
 
               <Text style={styles.sourceNote}>
-                Source: obkseattle.org · Not independently verified
+                Source: obkseattle.org  -  Not independently verified
               </Text>
             </>
           ) : (
@@ -633,7 +648,7 @@ useEffect(() => {
   ) : (
     <>
       <Text style={styles.prayerDisclaimer}>
-        {officialSchedule.date}{officialError ? ' · Last loaded schedule (verify before travel)' : ''}
+        {officialSchedule.date}{officialError ? '  -  Last loaded schedule (verify before travel)' : ''}
       </Text>
 
       <View style={styles.prayerRow}>
@@ -667,7 +682,7 @@ useEffect(() => {
           </Text>
 
           <Text style={[styles.prayerTime, { width: '35%', fontSize: 12 }]}>
-            {prayer.iqamah ?? '—'}
+            {prayer.iqamah ?? '-'}
           </Text>
         </View>
       ))}
@@ -687,7 +702,7 @@ useEffect(() => {
 
         <View style={styles.sectionHeading}>
           <Text style={styles.sectionTitle}>Current Events</Text>
-          <Text style={styles.posterHint}>Swipe to explore →</Text>
+          <Text style={styles.posterHint}>Swipe to explore</Text>
         </View>
 
         {eventsLoading ? (
@@ -730,7 +745,7 @@ useEffect(() => {
         </View>
 
         <Text style={styles.footer}>
-          OBK Seattle · App Development Preview
+          OBK Seattle  -  App Development Preview
         </Text>
       </ScrollView>
       <Modal
@@ -747,7 +762,7 @@ useEffect(() => {
             onPress={() => setSelectedPoster(null)}
             style={styles.posterCloseButton}
           >
-            <Text style={styles.posterCloseText}>✕  Close</Text>
+            <Text style={styles.posterCloseText}>X  Close</Text>
           </Pressable>
           {selectedPoster && (
             <Image
