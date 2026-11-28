@@ -1,19 +1,16 @@
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import {
-    getReminderTime,
-    isValidTime,
-} from './jumuah-schedule';
+
 
 const REMINDER_IDENTIFIER = 'obk-jumuah-weekly-reminder';
+const FIXED_REMINDER_HOUR = 12;
+const FIXED_REMINDER_MINUTE = 0;
 
 export async function scheduleJumuahReminder(
-  khutbahTime: string
+  _khutbahTime: string
 ): Promise<boolean> {
-  if (!isValidTime(khutbahTime)) {
-    throw new Error('Invalid Khutbah time.');
-  }
+  if (Platform.OS === "web") return false;
 
   const permission = await Notifications.getPermissionsAsync();
 
@@ -30,14 +27,14 @@ export async function scheduleJumuahReminder(
     return false;
   }
 
-  const reminderTime = getReminderTime(khutbahTime);
-  const [hour, minute] = reminderTime.split(':').map(Number);
+  const hour = FIXED_REMINDER_HOUR;
+  const minute = FIXED_REMINDER_MINUTE;
 
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(
       'jumuah-reminders',
       {
-        name: 'Jumu’ah Reminders',
+        name: 'Jumuâ€™ah Reminders',
         importance:
           Notifications.AndroidImportance.HIGH,
         sound: 'default',
@@ -61,9 +58,9 @@ export async function scheduleJumuahReminder(
   await Notifications.scheduleNotificationAsync({
     identifier: REMINDER_IDENTIFIER,
     content: {
-      title: 'Jumu’ah Reminder 🕌',
+      title: 'Jumuâ€™ah Reminder ðŸ•Œ',
       body:
-        'Assalamu Alaikum! Khutbah at OBK Seattle begins in 30 minutes.',
+        'Assalamu Alaikum! OBK Seattle Khutbah begins at 12:30 PM.',
       sound: 'default',
       ...(Platform.OS === 'android'
         ? { channelId: 'jumuah-reminders' }
@@ -94,12 +91,14 @@ trigger:
 }
 
 export async function cancelJumuahReminder(): Promise<void> {
+  if (Platform.OS === "web") return;
   await Notifications.cancelScheduledNotificationAsync(
     REMINDER_IDENTIFIER
   );
 }
 
 export async function isJumuahReminderScheduled(): Promise<boolean> {
+  if (Platform.OS === "web") return false;
   const scheduled =
     await Notifications.getAllScheduledNotificationsAsync();
 
@@ -111,11 +110,9 @@ export async function isJumuahReminderScheduled(): Promise<boolean> {
 
 
 export async function syncJumuahReminder(
-  khutbahTime: string
+  _khutbahTime: string
 ): Promise<boolean> {
-  if (!isValidTime(khutbahTime)) {
-    throw new Error('Invalid Khutbah time.');
-  }
+  if (Platform.OS === "web") return false;
 
   const scheduled =
     await Notifications.getAllScheduledNotificationsAsync();
@@ -130,8 +127,8 @@ export async function syncJumuahReminder(
     return false;
   }
 
-  const reminderTime = getReminderTime(khutbahTime);
-  const [hour, minute] = reminderTime.split(':').map(Number);
+  const hour = FIXED_REMINDER_HOUR;
+  const minute = FIXED_REMINDER_MINUTE;
 
   
  
@@ -178,13 +175,14 @@ export async function syncJumuahReminder(
 
   // The reminder time has changed.
   // Replace the existing weekly reminder.
-  const updated = await scheduleJumuahReminder(khutbahTime);
+  const updated = await scheduleJumuahReminder(_khutbahTime);
 
   return updated;
 }
 
 
 export async function getJumuahReminderDetails() {
+  if (Platform.OS === "web") return { scheduled: false, trigger: null };
   const notifications =
     await Notifications.getAllScheduledNotificationsAsync();
 
@@ -205,3 +203,5 @@ export async function getJumuahReminderDetails() {
     trigger: reminder.trigger,
   };
 }
+
+

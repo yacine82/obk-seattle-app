@@ -1,4 +1,4 @@
-{
+﻿{
   "expo": {
     "name": "obk-seattle-app",
     "slug": "obk-seattle-app",
@@ -25,7 +25,7 @@
       "package": "com.yasco82.obkseattleapp"
     },
     "web": {
-      "output": "server",
+      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -62,6 +62,13 @@
         "projectId": "470c89e8-6458-437f-83c8-af4177b1bef7"
       }
     },
-    "owner": "yasco82"
+    "owner": "yasco82",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/470c89e8-6458-437f-83c8-af4177b1bef7"
+    }
   }
 }
+

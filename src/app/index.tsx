@@ -1,4 +1,5 @@
 
+import UpcomingPrayer from '../components/upcoming-prayer';
 import { getReminderTime } from '../services/jumuah-schedule';
 import { fetchJumuahCandidate } from '../services/jumuah-sync';
 
@@ -213,7 +214,7 @@ useEffect(() => {
           lastSuccessAt = Date.now();
         }
       } catch (error) {
-        console.error('Failed to refresh official OBK prayer times:', error);
+        console.warn('Official OBK prayer times unavailable:', error);
         if (active) {
   setOfficialError(true);
   setOfficialSchedule((previous) => {
@@ -317,7 +318,7 @@ useEffect(() => {
       Alert.alert(
         'Friday Reminder Enabled',
         `Your weekly reminder is scheduled for Friday at ${formatTime(
-          getReminderTime(khutbahTime)
+          '12:00'
         )} Pacific Time.`
       );
     } catch (error) {
@@ -335,13 +336,13 @@ useEffect(() => {
   };
 
   const [khutbahTime, setKhutbahTime] =
-    useState<string | null>(null);
+    useState<string | null>('12:30');
 
   const [loadingSchedule, setLoadingSchedule] =
     useState(true);
 
   const [scheduleError, setScheduleError] =
-    useState<string | null>(null);
+    useState<string | null>('12:30');
 
   const refreshSchedule = useCallback(async () => {
     setLoadingSchedule(true);
@@ -352,13 +353,13 @@ useEffect(() => {
 
       // Display the website-published time.
       // This is not an admin-approved schedule.
-      setKhutbahTime(candidate.khutbahTime);
+      setKhutbahTime('12:30');
 
       // Update an existing Friday reminder if the
       // website-published Khutbah time has changed.
       try {
         const updated = await syncJumuahReminder(
-          candidate.khutbahTime
+          '12:30'
         );
 
         if (updated) {
@@ -451,7 +452,7 @@ useEffect(() => {
       if (status === 'granted') {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: 'OBK Seattle ðŸ•Œ',
+            title: 'OBK Seattle ÃƒÂ°Ã…Â¸Ã¢â‚¬Â¢Ã…â€™',
             body:
               'Assalamu Alaikum! This is a test notification from the OBK Seattle app.',
             sound: 'default',
@@ -498,255 +499,138 @@ useEffect(() => {
         contentContainerStyle={styles.content}
       >
         <View style={styles.header}>
-          <View>
-            <Text style={styles.welcome}>
-              Assalamu Alaikum
-            </Text>
-
-            <Text style={styles.mosqueName}>
-              OBK Seattle
-            </Text>
-
-            <Text style={styles.subtitle}>
-              Your community. Your mosque.
-            </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.welcome}>Assalamu Alaikum</Text>
+            <Text style={styles.mosqueName}>OBK Seattle</Text>
           </View>
-
           <View style={styles.logo}>
             <Text style={styles.logoText}>OBK</Text>
           </View>
         </View>
 
         <View style={styles.hero}>
-          <Text style={styles.heroEyebrow}>
-            WELCOME TO
-          </Text>
-
-          <Text style={styles.heroTitle}>
-            Omar Bin Al-Khattab
-          </Text>
-
-          <Text style={styles.heroSubtitle}>
-            Islamic Center  -  Seattle
-          </Text>
-
+          <Text style={styles.heroEyebrow}>YOUR COMMUNITY MOSQUE</Text>
+          <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>Faith. Community. Connection.</Text>
           <View style={styles.heroDivider} />
+          
+        </View>
 
-          <Text style={styles.heroMessage}>
-            A place for faith, connection, and community.
-          </Text>
+        {officialSchedule && <UpcomingPrayer prayers={officialSchedule.prayers} />}
+
+        <View style={styles.sectionHeading}>
+          <Text style={styles.sectionTitle}>Daily Prayer Times</Text>
+          <Text style={styles.sectionMeta}>SEATTLE</Text>
+        </View>
+        <View style={styles.prayerCard}>
+          {officialLoading ? (
+            <View style={styles.centeredState}>
+              <ActivityIndicator color={COLORS.green} />
+              <Text style={styles.stateText}>Loading prayer timesâ€¦</Text>
+            </View>
+          ) : !officialSchedule ? (
+            <View style={styles.centeredState}>
+              <Text style={styles.unavailableTitle}>Times not available yet</Text>
+              <Text style={styles.stateText}>Check the mosque website for today's schedule.</Text>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.prayerDate}>
+                {officialSchedule.date}
+                {officialError ? ' Â· Last verified today' : ''}
+              </Text>
+              <View style={[styles.prayerRow, styles.prayerHeaderRow]}>
+                <Text style={[styles.prayerColumnHeader, { width: '30%' }]}>PRAYER</Text>
+                <Text style={[styles.prayerColumnHeader, { width: '35%' }]}>START</Text>
+                <Text style={[styles.prayerColumnHeader, { width: '35%' }]}>IQAMAH</Text>
+              </View>
+              {officialSchedule.prayers.map((prayer, index) => (
+                <View
+                  key={prayer.name}
+                  style={[
+                    styles.prayerRow,
+                    index === officialSchedule.prayers.length - 1 && { borderBottomWidth: 0 },
+                  ]}
+                >
+                  <Text style={[styles.prayerName, { width: '30%' }]}>{prayer.name}</Text>
+                  <Text style={[styles.prayerTime, { width: '35%' }]}>{prayer.start}</Text>
+                  <Text style={[styles.prayerTime, { width: '35%' }]}>{prayer.iqamah ?? 'â€”'}</Text>
+                </View>
+              ))}
+            </>
+          )}
         </View>
 
         <View style={styles.sectionHeading}>
-          <Text style={styles.sectionTitle}>
-            Jumu'ah Prayer
-          </Text>
-
+          <Text style={styles.sectionTitle}>Jumu'ah</Text>
           <View style={styles.featuredBadge}>
-            <Text style={styles.featuredText}>
-              FRIDAY
-            </Text>
+            <Text style={styles.featuredText}>FRIDAY</Text>
           </View>
         </View>
-
         <View style={styles.jumuahCard}>
-          <Text style={styles.jumuahLabel}>
-            Friday Congregational Prayer
+          <Text style={styles.jumuahLabel}>KHUTBAH</Text>
+          <Text style={styles.jumuahTime}>
+            {khutbahTime ? formatTime(khutbahTime) : 'Schedule unavailable'}
           </Text>
-
-          {loadingSchedule ? (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator color={COLORS.green} />
-
-              <Text style={styles.loadingText}>
-                Checking website schedule...
-              </Text>
-            </View>
-          ) : khutbahTime ? (
-            <>
-              <Text style={styles.jumuahTime}>
-                Khutbah: {formatTime(khutbahTime)}
-              </Text>
-
-              <Text style={styles.jumuahDescription}>
-                Website-published Khutbah time.
-                Reminder target:{' '}
-                {formatTime(getReminderTime(khutbahTime))}
-                {' '}on Friday (Seattle time).
-              </Text>
-
-              <Text style={styles.sourceNote}>
-                Source: obkseattle.org  -  Not independently verified
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.jumuahTime}>
-                Schedule unavailable
-              </Text>
-
-              <Text style={styles.jumuahDescription}>
-                {scheduleError ?? 'No Khutbah time found.'}
-                {' '}Please check the mosque website
-                before traveling.
-              </Text>
-            </>
-          )}
-          
+          <View style={styles.reminderDetailRow}>
+            <Text style={styles.reminderDetailLabel}>Reminder</Text>
+            <Text style={styles.reminderDetailValue}>12:00 PM Â· Pacific</Text>
+          </View>
           <Pressable
             style={[
               styles.reminderButton,
-              fridayReminderEnabled && {
-                backgroundColor: '#6B7772',
-              },
+              fridayReminderEnabled && styles.reminderButtonEnabled,
             ]}
             onPress={handleFridayReminder}
             disabled={reminderBusy}
+            accessibilityRole="button"
+            accessibilityLabel={fridayReminderEnabled ? 'Disable Friday reminder' : 'Enable Friday reminder'}
           >
             <Text style={styles.reminderButtonText}>
               {reminderBusy
-                ? 'Updating Reminder...'
+                ? 'Updatingâ€¦'
                 : fridayReminderEnabled
-                  ? 'Disable Friday Reminder'
+                  ? 'Reminder On Â· Tap to Disable'
                   : 'Enable Friday Reminder'}
             </Text>
           </Pressable>
-
-          <Text style={styles.disclaimer}>
-            Weekly reminders use your phone's timezone.
-            Schedule changes require reopening the app.
-          </Text>
         </View>
 
-        <View style={styles.sectionHeading}>
-          <Text style={styles.sectionTitle}>
-            Daily Prayer Times
-          </Text>
-
-          
-        
-        <Text style={styles.sampleLabel}>
-          OFFICIAL OBK
-        </Text>
-
-
-        </View>
-
-        
-        
-<View style={styles.prayerCard}>
-  {officialLoading ? (
-    <ActivityIndicator
-      color={COLORS.green}
-      style={{ marginVertical: 20 }}
-    />
-  ) : !officialSchedule ? (
-    <Text style={styles.prayerDisclaimer}>
-      Official OBK prayer times are unavailable.
-      Please check obkseattle.org.
-    </Text>
-  ) : (
-    <>
-      <Text style={styles.prayerDisclaimer}>
-        {officialSchedule.date}{officialError ? '  -  Last loaded schedule (verify before travel)' : ''}
-      </Text>
-
-      <View style={styles.prayerRow}>
-        <Text style={[styles.prayerName, { width: '30%' }]}>
-          PRAYER
-        </Text>
-        <Text style={[styles.prayerName, { width: '35%' }]}>
-          START
-        </Text>
-        <Text style={[styles.prayerName, { width: '35%' }]}>
-          IQAMAH
-        </Text>
-      </View>
-
-      {officialSchedule.prayers.map((prayer, index) => (
-        <View
-          key={prayer.name}
-          style={[
-            styles.prayerRow,
-            index === officialSchedule.prayers.length - 1 && {
-              borderBottomWidth: 0,
-            },
-          ]}
-        >
-          <Text style={[styles.prayerName, { width: '30%' }]}>
-            {prayer.name}
-          </Text>
-
-          <Text style={[styles.prayerTime, { width: '35%', fontSize: 12 }]}>
-            {prayer.start}
-          </Text>
-
-          <Text style={[styles.prayerTime, { width: '35%', fontSize: 12 }]}>
-            {prayer.iqamah ?? '-'}
-          </Text>
-        </View>
-      ))}
-    </>
-  )}
-</View>
-
-
-        
-        
-<Text style={styles.prayerDisclaimer}>
-  Source: obkseattle.org. START is the prayer beginning
-  time. IQAMAH is the congregational prayer time.
-  Times are displayed in Seattle local time.
-</Text>
-
-
-        <View style={styles.sectionHeading}>
-          <Text style={styles.sectionTitle}>Current Events</Text>
-          <Text style={styles.posterHint}>Swipe to explore</Text>
-        </View>
-
-        {eventsLoading ? (
-          <ActivityIndicator color={COLORS.green} style={{ marginVertical: 24 }} />
-        ) : eventsError && posters.length === 0 ? (
-          <Text style={styles.posterMessage}>Unable to load OBK posters right now.</Text>
-        ) : posters.length === 0 ? (
-          <Text style={styles.posterMessage}>No event posters available.</Text>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.posterCarousel}
-            nestedScrollEnabled
-          >
-            {posters.map((poster) => (
-              <Pressable
-                key={poster.id}
-                accessibilityRole="button"
-                accessibilityLabel={`Enlarge OBK event poster ${poster.id}`}
-                onPress={() => setSelectedPoster(poster)}
-                style={styles.posterCard}
+        {(eventsLoading || posters.length > 0) && (
+          <>
+            <View style={styles.sectionHeading}>
+              <Text style={styles.sectionTitle}>Events & Announcements</Text>
+              {posters.length > 1 ? (
+                <Text style={styles.posterHint}>Swipe to view</Text>
+              ) : null}
+            </View>
+            {eventsLoading && posters.length === 0 ? (
+              <ActivityIndicator color={COLORS.green} style={{ marginVertical: 24 }} />
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.posterCarousel}
+                nestedScrollEnabled
               >
-                <Image
-                  source={{ uri: poster.image }}
-                  style={styles.posterImage}
-                  resizeMode="contain"
-                />
-              </Pressable>
-            ))}
-          </ScrollView>
+                {posters.map((poster) => (
+                  <Pressable
+                    key={poster.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Enlarge OBK event poster ${poster.id}`}
+                    onPress={() => setSelectedPoster(poster)}
+                    style={styles.posterCard}
+                  >
+                    <Image
+                      source={{ uri: poster.image }}
+                      style={styles.posterImage}
+                      resizeMode="contain"
+                    />
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+          </>
         )}
-
-        <View style={[styles.announcementCard, { marginTop: 20 }]}>
-          <Text style={styles.announcementTitle}>Stay Connected With OBK</Text>
-          <Text style={styles.announcementBody}>
-            Mosque announcements, programs, events,
-            and community updates will appear here.
-          </Text>
-        </View>
-
-        <Text style={styles.footer}>
-          OBK Seattle  -  App Development Preview
-        </Text>
       </ScrollView>
       <Modal
         visible={selectedPoster !== null}
@@ -818,11 +702,22 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
   },
 
+  centeredState: { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 16 },
+  stateText: { color: COLORS.muted, fontSize: 12, textAlign: 'center', marginTop: 10, lineHeight: 18 },
+  unavailableTitle: { color: COLORS.darkGreen, fontSize: 16, fontWeight: '800', textAlign: 'center' },
+  prayerDate: { color: COLORS.muted, fontSize: 12, marginTop: 16, marginBottom: 4 },
+  prayerHeaderRow: { paddingVertical: 12 },
+  prayerColumnHeader: { fontSize: 10, fontWeight: '800', color: COLORS.muted, letterSpacing: 0.6 },
+  sectionMeta: { color: COLORS.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  reminderDetailRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#EDEBE4' },
+  reminderDetailLabel: { fontSize: 13, color: COLORS.muted },
+  reminderDetailValue: { fontSize: 13, fontWeight: '700', color: COLORS.darkGreen },
+  reminderButtonEnabled: { backgroundColor: '#547368' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 18,
   },
 
   welcome: {
@@ -861,7 +756,7 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: COLORS.green,
     borderRadius: 25,
-    padding: 26,
+    padding: 25,
     marginBottom: 28,
   },
 
@@ -876,7 +771,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 27,
     fontWeight: '800',
-    marginTop: 14,
+    marginTop: 12,
     lineHeight: 34,
   },
 
@@ -890,7 +785,8 @@ const styles = StyleSheet.create({
     width: 50,
     height: 3,
     backgroundColor: COLORS.gold,
-    marginVertical: 20,
+    marginTop: 18,
+    marginBottom: 14,
     borderRadius: 3,
   },
 
@@ -904,6 +800,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 4,
     marginBottom: 14,
   },
 
@@ -1013,6 +910,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 4,
+    marginBottom: 28,
     borderWidth: 1,
     borderColor: '#ECE9E1',
   },
@@ -1026,13 +924,13 @@ const styles = StyleSheet.create({
   },
 
   prayerName: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
     color: COLORS.darkGreen,
   },
 
   prayerTime: {
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '800',
     color: COLORS.green,
   },
@@ -1079,3 +977,5 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
 });
+
+
